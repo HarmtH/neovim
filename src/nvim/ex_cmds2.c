@@ -1850,6 +1850,11 @@ void do_argfile(exarg_T *eap, int argn)
   } else {
     setpcmark();
 
+    other = true;
+    p = (char_u *)fix_fname((char *)alist_name(&ARGLIST[argn]));
+    other = otherfile(p);
+    xfree(p);
+
     // split window or create new tab page first
     if (*eap->cmd == 's' || cmdmod.tab != 0) {
       if (win_split(0, 0) == FAIL) {
@@ -1857,15 +1862,7 @@ void do_argfile(exarg_T *eap, int argn)
       }
       RESET_BINDING(curwin);
     } else {
-      // if 'hidden' set, only check for changed file when re-editing
-      // the same buffer
-      other = true;
-      if (buf_hide(curbuf)) {
-        p = (char_u *)fix_fname((char *)alist_name(&ARGLIST[argn]));
-        other = otherfile(p);
-        xfree(p);
-      }
-      if ((!buf_hide(curbuf) || !other)
+      if ((!buf_hide(curbuf) && other)
           && check_changed(curbuf, CCGD_AW
                            | (other ? 0 : CCGD_MULTWIN)
                            | (eap->forceit ? CCGD_FORCEIT : 0)
@@ -1878,6 +1875,12 @@ void do_argfile(exarg_T *eap, int argn)
     if (argn == ARGCOUNT - 1
         && curwin->w_alist == &global_alist) {
       arg_had_last = true;
+    }
+
+    if (!other) {
+        check_arg_idx(curwin);
+        maketitle();
+        return;
     }
 
     // Edit the file; always use the last known line number.
