@@ -1987,6 +1987,7 @@ void ex_argdelete(exarg_T *eap)
   } else {
     do_arglist(eap->arg, AL_DEL, 0);
   }
+  check_arg_idx(curwin);
   maketitle();
 }
 
